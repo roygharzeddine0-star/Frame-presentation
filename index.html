@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<button id="installBtn" class="primary">
-    ⬇ Install FRAME
-</button>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -68,6 +66,9 @@ h3{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mute
 <header class="top">
  <div class="logo">FRAME</div><div class="sub">CINEMATIC PRESENTATION STUDIO · ALPHA</div>
  <div class="spacer"></div>
+<button id="installBtn" class="primary">
+    ⬇ Install FRAME
+</button>
  <button id="newBtn">＋ New project</button><button id="saveBtn">Save project</button><button id="loadBtn">Open project</button><button class="primary" id="playBtn">▶ Preview</button>
  <input id="projectFile" type="file" accept=".FRAME,.frame,.json,application/json" hidden>
 </header>
@@ -395,5 +396,44 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     navigator.serviceWorker.register('./service-worker.js').catch(err => console.warn('FRAME offline setup:', err));
   });
 }
+</script>
+<script>
+let deferredInstallPrompt = null;
+
+const installBtn = document.getElementById("installBtn");
+
+installBtn.addEventListener("click", async () => {
+    if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+
+        const result = await deferredInstallPrompt.userChoice;
+
+        if (result.outcome === "accepted") {
+            installBtn.textContent = "Installing...";
+        }
+
+        deferredInstallPrompt = null;
+    } else {
+        alert(
+            "FRAME installation isn't available yet.\n\n" +
+            "Make sure you're using Chrome and have opened FRAME " +
+            "through its HTTPS website. You can also use Chrome's " +
+            "menu → Install app."
+        );
+    }
+});
+
+window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+
+    deferredInstallPrompt = event;
+    installBtn.textContent = "⬇ Install FRAME";
+    installBtn.style.display = "inline-block";
+});
+
+window.addEventListener("appinstalled", () => {
+    installBtn.textContent = "✓ FRAME Installed";
+    installBtn.disabled = true;
+});
 </script>
 </body></html>
