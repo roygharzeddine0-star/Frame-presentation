@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="FRAME">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/frame-192.png" type="image/png">
+<title>FRAME — Cinematic Presentation Studio</title>
+<style>
+:root{--bg:#0b0d12;--panel:#141821;--panel2:#1b2230;--line:#2b3445;--text:#eef2f8;--muted:#9ba8ba;--gold:#d6ad70;--blue:#79aef7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Arial;overflow:hidden}
+button,input,select{font:inherit}button{border:1px solid var(--line);background:#202838;color:var(--text);padding:9px 12px;border-radius:9px;cursor:pointer}button:hover{border-color:var(--gold)}button:disabled{opacity:.42;cursor:not-allowed}button.primary{background:var(--gold);color:#17130e;border-color:var(--gold);font-weight:700}button.active{border-color:var(--gold);color:var(--gold)}
+.top{height:58px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#10141c}
+.logo{font-weight:900;letter-spacing:3px;color:var(--gold);font-size:18px}.sub{color:var(--muted);font-size:12px}.spacer{flex:1}
+.layout{height:calc(100dvh - 58px);display:grid;grid-template-columns:235px minmax(0,1fr) 255px;grid-template-rows:minmax(0,1fr) 160px}
+.panel{background:var(--panel);padding:14px;overflow:auto;border-right:1px solid var(--line)}.right{border-right:0;border-left:1px solid var(--line)}
+h3{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin:3px 0 12px}
+.group{margin-bottom:20px}.tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tools button{font-size:12px;padding:10px 6px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:9px}
+.stageWrap{display:flex;flex-direction:column;min-width:0;min-height:0;background:#090b10}
+.stageHead{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:var(--muted);font-size:12px}
+.viewport{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden}
+#screen{position:relative;width:min(100%,1100px);aspect-ratio:16/9;background:#242a32;overflow:hidden;box-shadow:0 15px 55px #0009;border:1px solid #3a4352;touch-action:none}
+#screen:before,#playScreen:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--scene-pattern,none);background-size:100% 100%;z-index:0}
+#world,#playWorld{z-index:1}
+#overlay,#playOverlay{z-index:2}
+
+#world{position:absolute;width:1600px;height:3000px;left:0;top:0;transform-origin:0 0;background:transparent!important;overflow:visible}
+#world:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--scene-pattern,none);background-size:100% 100%;z-index:0}
+.obj{position:absolute;user-select:none;touch-action:none;cursor:move;transform-origin:center center}
+.obj.selected{outline:2px solid var(--gold);outline-offset:4px}
+.obj img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.obj.textobj{white-space:pre-wrap;font-family:Georgia,serif;color:#f5e8d1;text-shadow:0 3px 14px #000;z-index:20;display:block;overflow:visible;line-height:1.15}
+.obj.card{background:#d7c8a7;color:#211d18;padding:12px;box-shadow:0 8px 25px #0008;border:6px solid #30271e}
+.obj.card .tag{font:bold 12px Arial;color:#9d3029;letter-spacing:2px}
+.obj.card .name{font:bold 26px Georgia;margin:8px 0}
+.obj.card .detail{font:12px Arial;letter-spacing:1px}
+#overlay{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse,transparent 48%,#0008 100%)}
+.letter{position:absolute;left:0;right:0;height:7%;background:#000;pointer-events:none;opacity:.8}
+.letter.top{top:0}.letter.bottom{bottom:0}
+.timeline{grid-column:1/4;background:#111620;border-top:1px solid var(--line);padding:10px 14px;overflow:auto}
+.thead{display:flex;align-items:center;gap:8px;margin-bottom:9px}.timelineBody{display:flex;gap:10px;align-items:stretch;min-width:0}.editorTile{flex:0 0 120px;height:90px;border:1px solid var(--line);border-radius:9px;background:#202838;color:var(--text);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;font-weight:800;letter-spacing:1px}.editorTile.active{border:2px solid var(--gold);background:#30291f;color:var(--gold)}.editorTile small{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0}.frames{display:flex;gap:9px;align-items:stretch;overflow-x:auto;min-width:0;padding-bottom:2px}.shot-locked #screen{cursor:default}.shot-locked .obj{cursor:default!important}.shot-locked .obj.selected{outline:none}
+.frame{min-width:135px;height:90px;border:1px solid var(--line);border-radius:9px;background:#1b2230;padding:9px;cursor:pointer;position:relative}
+.frame.sel{border:2px solid var(--gold);background:#2b2b2a}.frame b{display:block;font-size:12px}.frame small{color:var(--muted);font-size:10px}
+.frame .num{position:absolute;right:8px;bottom:6px;color:#758197;font-size:10px}
+.field{display:flex;flex-direction:column;gap:5px;margin:9px 0}.field label{color:var(--muted);font-size:11px}
+.field input,.field select{background:#0d121a;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:8px;width:100%;min-width:0}
+.row{display:flex;gap:7px}.row>*{flex:1;min-width:0}
+.empty{color:var(--muted);font-size:12px;line-height:1.6}
+#playView{display:none;position:fixed;inset:0;background:#000;z-index:10;align-items:center;justify-content:center}
+#playScreen{width:min(100vw,177.78vh);aspect-ratio:16/9;position:relative;overflow:hidden;background:#17191e}
+#playWorld{position:absolute;width:1600px;height:3000px;transform-origin:0 0;background:transparent!important;overflow:visible}
+#playWorld:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--scene-pattern,none);background-size:100% 100%;z-index:0}
+.playbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:12;background:#141821dd;padding:8px;border:1px solid #465064;border-radius:12px}
+@media(max-width:850px){.layout{grid-template-columns:155px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 150px}.right{display:none}.timeline{grid-column:1/3}.panel{padding:10px}.tools{grid-template-columns:1fr}.top .sub{display:none}}
+@media(max-width:560px){.layout{grid-template-columns:112px minmax(0,1fr)}.panel{padding:7px}.tools button{font-size:10px;padding:8px 3px}.hint{font-size:10px}.top{padding:0 9px}.top button{padding:7px}.stageHead{padding:0 8px}.viewport{padding:5px}}
+.directionPad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px;align-items:center}.directionPad button{min-width:0;padding:9px 4px;font-size:18px;line-height:1.1}.padCenter{display:grid;place-items:center;color:#687487;font-size:12px;min-height:38px}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="logo">FRAME</div><div class="sub">CINEMATIC PRESENTATION STUDIO · ALPHA</div>
+ <div class="spacer"></div>
+ <button id="newBtn">＋ New project</button><button id="saveBtn">Save project</button><button id="loadBtn">Open project</button><button class="primary" id="playBtn">▶ Preview</button>
+ <input id="projectFile" type="file" accept=".FRAME,.frame,.json,application/json" hidden>
+</header>
+<div class="layout">
+ <aside class="panel">
+  <div class="group"><h3>Build your scene</h3>
+   <div class="tools">
+    <button id="addImage">＋ Add photo</button><button id="addText">T Add title</button>
+    <button id="addCard">▤ Wanted card</button><button id="addNote">＋ Case note</button>
+    <button id="addThread">↗ Red thread</button><button id="deleteObj">✕ Delete item</button>
+   </div>
+   <input id="imageFile" type="file" accept="image/*" hidden>
+   <div class="hint">Drag items around the large scene. Select an item to edit it. Your scene is one continuous canvas — not separate slide backgrounds.</div>
+  </div>
+  <div class="group"><h3>Scene background</h3>
+   <div class="field"><label>Background style</label><select id="bgStyle">
+    <option value="cinematic">Cinematic glow</option>
+    <option value="gradient">Diagonal gradient</option>
+    <option value="solid">Solid colour</option>
+    <option value="grid">Subtle grid</option>
+    <option value="blueprint">Blueprint grid</option>
+   </select></div>
+   <div class="field"><label>Primary colour</label><input id="bgColor1" type="color" value="#3a3026"></div>
+   <div class="field"><label>Secondary colour</label><input id="bgColor2" type="color" value="#15181e"></div>
+   <div class="hint">The background fills the entire continuous scene and stays consistent in Preview.</div>
+  </div>
+  <div class="group"><h3>Camera shot</h3>
+   <button class="primary" style="width:100%" id="addShot">＋ Add camera shot</button>
+   <div class="hint">Move the camera view, zoom in or out, then add a shot. Preview smoothly travels between your saved camera positions.</div>
+  </div>
+  <div class="group"><h3>Camera controls</h3>
+   <div class="row"><button id="zoomOut">− Zoom</button><button id="zoomIn">＋ Zoom</button></div>
+   <div class="directionPad" aria-label="Camera movement controls">
+    <button id="upLeft" title="Move up-left">↖</button><button id="up" title="Move up">↑</button><button id="upRight" title="Move up-right">↗</button>
+    <button id="left" title="Move left">←</button><span class="padCenter">●</span><button id="right" title="Move right">→</button>
+    <button id="downLeft" title="Move down-left">↙</button><button id="down" title="Move down">↓</button><button id="downRight" title="Move down-right">↘</button>
+   </div>
+   <button id="fit" style="width:100%;margin-top:7px">Fit whole scene</button>
+  </div>
+ </aside>
+ <main class="stageWrap">
+  <div class="stageHead"><span>SCENE VIEW · 16:9</span><span id="camReadout">Zoom 100%</span></div>
+  <div class="viewport"><div id="screen"><div id="world"></div><div id="overlay"></div><div class="letter top"></div><div class="letter bottom"></div></div></div>
+ </main>
+ <aside class="panel right">
+  <div class="group"><h3>Selected item</h3><div id="inspector" class="empty">Select an item in the scene to edit its properties.</div></div>
+  <div class="group"><h3>Shot settings</h3>
+   <div class="field"><label>Transition duration (seconds)</label><input id="duration" type="number" min="0.5" max="20" step=".5" value="3"></div>
+   <div class="field"><label>Pause after this shot (seconds)</label><input id="pauseDuration" type="number" min="0" max="60" step=".5" value="1.5"></div>
+   <div class="field"><label>Camera easing</label><select id="easing"><option value="cinema">Cinematic ease</option><option value="smooth">Smooth</option><option value="linear">Linear</option></select></div>
+   <button id="updateShot" style="width:100%">Update selected shot</button>
+  </div>
+  <div class="hint">Tip: For the wanted-photo reveal, start with a close camera shot on the face, then add a second shot zoomed out to show the whole board.</div>
+ </aside>
+ <section class="timeline">
+  <div class="thead"><h3 style="margin:0">Camera timeline</h3><span class="sub">Each frame is a camera position in the same scene</span><div class="spacer"></div><button id="delShot">Remove shot</button></div>
+  <div class="timelineBody"><button class="editorTile active" id="editorMode"><span>✎ EDITOR</span><small>Free scene editing</small></button><div class="frames" id="frames"></div></div>
+ </section>
+</div>
+<div id="playView"><div id="playScreen"><div id="playWorld"></div><div id="playOverlay" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse,transparent 48%,#0008 100%)"></div><div class="letter top"></div><div class="letter bottom"></div></div><div class="playStatus" id="playStatus">SHOT 1 · READY</div><div class="playbar"><button id="prevPlay">◀ Previous</button><button id="nextPlay" class="primary">Next ▶</button><button id="closePlay">✕ Exit preview</button></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const world=$('world'), screen=$('screen');
+let sceneBackground={style:'cinematic',color1:'#3a3026',color2:'#15181e'};
+function applyBackground(){
+ const {style,color1,color2}=sceneBackground;
+ let base='';
+ let pattern='none';
+ if(style==='solid') base=`linear-gradient(${color1},${color1})`;
+ else if(style==='gradient') base=`linear-gradient(135deg,${color1} 0%,${color2} 100%)`;
+ else if(style==='grid'){
+  base=`radial-gradient(ellipse at 50% 35%,${color1} 0%,${color2} 100%)`;
+  pattern='repeating-linear-gradient(0deg,transparent 0 79px,#ffffff12 80px 81px),repeating-linear-gradient(90deg,transparent 0 79px,#ffffff12 80px 81px)';
+ }else if(style==='blueprint'){
+  base=`linear-gradient(135deg,${color1},${color2})`;
+  pattern='repeating-linear-gradient(0deg,transparent 0 39px,#9ed8ff20 40px 41px),repeating-linear-gradient(90deg,transparent 0 39px,#9ed8ff20 40px 41px),repeating-linear-gradient(0deg,transparent 0 199px,#9ed8ff35 200px 202px),repeating-linear-gradient(90deg,transparent 0 199px,#9ed8ff35 200px 202px)';
+ }else{
+  base=`radial-gradient(ellipse at 50% 35%,${color1} 0%,${color2} 82%)`;
+ }
+ // Paint the background on the fixed screen, so every camera shot is covered,
+ // even when the camera pans outside the finite object canvas.
+ [screen,$('playScreen')].forEach(el=>{
+  if(!el)return;
+  el.style.backgroundColor=color2;
+  el.style.backgroundImage=base;
+  el.style.backgroundSize='100% 100%';
+  el.style.backgroundRepeat='no-repeat';
+  el.style.setProperty('--scene-pattern',pattern);
+ });
+}
+function syncBackgroundControls(){
+ $('bgStyle').value=sceneBackground.style;
+ $('bgColor1').value=sceneBackground.color1;
+ $('bgColor2').value=sceneBackground.color2;
+ applyBackground();
+}
+function readBackgroundControls(){
+ sceneBackground={
+  style:$('bgStyle').value,
+  color1:$('bgColor1').value,
+  color2:$('bgColor2').value
+ };
+ applyBackground();
+}
+
+let objects=[], shots=[{x:800,y:450,z:.65,d:3}], selected=null, shotIndex=0, nextId=1, editorMode=true;
+let cam={x:800,y:450,z:.65}, dragging=null, playTimer=null, pauseTimer=null, paused=false, playIndex=0;
+const clone=o=>JSON.parse(JSON.stringify(o));
+function sceneScale(){return screen.clientWidth/1600}
+function renderCamera(){
+ const s=sceneScale()*cam.z, x=screen.clientWidth/2-cam.x*s, y=screen.clientHeight/2-cam.y*s;
+ world.style.transform=`translate(${x}px,${y}px) scale(${s})`;
+ $('camReadout').textContent=`Zoom ${Math.round(cam.z*100)}%`;
+}
+function renderObjects(){
+ world.innerHTML='';
+ objects.forEach(o=>{
+  let el=document.createElement('div');el.className='obj'+(o.id===selected?' selected':'');el.dataset.id=o.id;
+  el.style.left=o.x+'px';el.style.top=o.y+'px';el.style.width=o.w+'px';el.style.height=o.h+'px';
+  if(o.type==='image'){let im=document.createElement('img');im.src=o.src;el.appendChild(im)}
+  if(o.type==='text'){el.classList.add('textobj');el.textContent=o.text;el.style.fontSize=o.size+'px';el.style.color=o.color;el.style.fontWeight=o.bold?'bold':'normal';el.style.textAlign=o.align||'center';el.style.zIndex='20'}
+  if(o.type==='card'){el.classList.add('card');el.innerHTML=`<div class="tag">${esc(o.tag||'WANTED')}</div><div class="name">${esc(o.name||'SUBJECT 01')}</div><div class="detail">${esc(o.detail||'IDENTITY UNKNOWN')}</div>`}
+  if(o.type==='note'){el.classList.add('card');el.style.background='#d9cfb5';el.innerHTML=`<div class="tag">${esc(o.tag||'CASE NOTE')}</div><div class="detail" style="margin-top:12px;font-size:18px">${esc(o.detail||'Last seen near the docks')}</div>`}
+  if(o.type==='thread'){el.style.height='5px';el.style.background='#b52e29';el.style.transformOrigin='left center';el.style.transform=`rotate(${o.angle||0}deg)`;el.style.boxShadow='0 0 12px #b52e2999'}
+  el.addEventListener('pointerdown',e=>{if(playTimer!==null||!editorMode)return;e.stopPropagation();select(o.id);dragging={id:o.id,sx:e.clientX,sy:e.clientY,ox:o.x,oy:o.y};el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!dragging||dragging.id!==o.id)return;let s=sceneScale()*cam.z;o.x=dragging.ox+(e.clientX-dragging.sx)/s;o.y=dragging.oy+(e.clientY-dragging.sy)/s;el.style.left=o.x+'px';el.style.top=o.y+'px';inspect()});
+  el.addEventListener('pointerup',()=>dragging=null);
+  world.appendChild(el);
+ });
+ renderCamera();
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function select(id){selected=id;renderObjects();inspect()}
+function add(o){o.id=nextId++;objects.push(o);select(o.id)}
+function inspect(){
+ const o=objects.find(x=>x.id===selected), box=$('inspector');
+ if(!o){box.className='empty';box.textContent='Select an item in the scene to edit its properties.';return}
+ box.className='';
+ let html=`<div class="field"><label>Item type</label><input value="${o.type}" disabled></div>`;
+ if(o.type==='text')html+=`<div class="field"><label>Text</label><input id="ptext" value="${esc(o.text)}"></div><div class="field"><label>Font size</label><input id="psize" type="number" value="${o.size}"></div><div class="field"><label>Color</label><input id="pcolor" type="color" value="${o.color}"></div>`;
+ if(o.type==='card'||o.type==='note')html+=`<div class="field"><label>Heading</label><input id="ptag" value="${esc(o.tag||'')}"></div><div class="field"><label>Name / details</label><input id="pname" value="${esc(o.name||o.detail||'')}"></div><div class="field"><label>Subtitle</label><input id="pdetail" value="${esc(o.detail||'')}"></div>`;
+ html+=`<div class="row"><div class="field"><label>X</label><input id="px" type="number" value="${Math.round(o.x)}"></div><div class="field"><label>Y</label><input id="py" type="number" value="${Math.round(o.y)}"></div></div><div class="row"><div class="field"><label>Width</label><input id="pw" type="number" value="${Math.round(o.w)}"></div><div class="field"><label>Height</label><input id="ph" type="number" value="${Math.round(o.h)}"></div></div><button id="applyProps" style="width:100%">Apply changes</button>`;
+ box.innerHTML=html;
+ $('applyProps').onclick=()=>{let val=(id,old)=>$(id)?$(id).value:old;o.x=+val('px',o.x);o.y=+val('py',o.y);o.w=Math.max(20,+val('pw',o.w));o.h=Math.max(20,+val('ph',o.h));if(o.type==='text'){o.text=val('ptext',o.text);o.size=+val('psize',o.size);o.color=val('pcolor',o.color)}if(o.type==='card'||o.type==='note'){o.tag=val('ptag',o.tag);if(o.type==='card')o.name=val('pname',o.name);o.detail=val('pdetail',o.detail)}renderObjects();inspect()};
+}
+function setEditorMode(enabled){
+ editorMode=!!enabled;
+ $('editorMode').classList.toggle('active',editorMode);
+ document.querySelector('.layout').classList.toggle('shot-locked',!editorMode);
+ $('editorMode').setAttribute('aria-pressed',String(editorMode));
+ // In shot-view mode, shots are navigation stops only. All scene-editing and
+ // camera controls become unavailable until the Editor tile is selected.
+ ['addImage','addText','addCard','addNote','addThread','deleteObj','addShot',
+  'zoomOut','zoomIn','fit','left','right','up','down','upLeft','upRight','downLeft','downRight',
+  'updateShot','delShot','bgStyle','bgColor1','bgColor2','duration','pauseDuration','easing'
+ ].forEach(id=>{const el=$(id);if(el)el.disabled=!editorMode;});
+ if(!editorMode){selected=null;renderObjects();inspect();}
+ renderShots();
+}
+$('editorMode').onclick=()=>setEditorMode(true);
+
+function renderShots(){
+ $('frames').innerHTML='';
+ shots.forEach((s,i)=>{let el=document.createElement('div');el.className='frame'+(!editorMode&&i===shotIndex?' sel':'');el.innerHTML=`<b>${i===0?'OPENING SHOT':'SHOT '+(i+1)}</b><small>Zoom ${Math.round(s.z*100)}% · X ${Math.round(s.x)} Y ${Math.round(s.y)}</small><span class="num">${String(i+1).padStart(2,'0')}</span>`;el.onclick=()=>{shotIndex=i;cam={x:s.x,y:s.y,z:s.z};$('duration').value=s.d||3;$('pauseDuration').value=s.pause??1.5;setEditorMode(false);renderCamera();};$('frames').appendChild(el)});
+}
+function addImage(){ $('imageFile').click() }
+$('imageFile').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>add({type:'image',src:r.result,x:560,y:260,w:480,h:360});r.readAsDataURL(f);e.target.value=''}
+$('addImage').onclick=addImage;
+$('addText').onclick=()=>{
+ // The camera coordinates represent the centre of the visible scene.
+ // Put the new title around that point so it is visible even after panning
+ // or selecting a different camera shot.
+ const titleWidth=760;
+ const titleHeight=120;
+ add({
+  type:'text',
+  text:'YOUR CINEMATIC TITLE',
+  x:cam.x-titleWidth/2,
+  y:cam.y-titleHeight/2,
+  w:titleWidth,
+  h:titleHeight,
+  size:64,
+  color:'#f5e8d1',
+  bold:true,
+  align:'center'
+ });
+};
+$('addCard').onclick=()=>add({type:'card',tag:'WANTED',name:'SUBJECT 01',detail:'IDENTITY UNKNOWN',x:560,y:220,w:360,h:500});
+$('addNote').onclick=()=>add({type:'note',tag:'CASE NOTE',detail:'Last seen near the docks',x:1040,y:280,w:330,h:190});
+$('addThread').onclick=()=>add({type:'thread',x:800,y:500,w:500,h:5,h:5,angle:18});
+$('deleteObj').onclick=()=>{objects=objects.filter(o=>o.id!==selected);selected=null;renderObjects();inspect()};
+$('zoomIn').onclick=()=>{cam.z=Math.min(2.8,cam.z*1.18);renderCamera()};
+$('zoomOut').onclick=()=>{cam.z=Math.max(.25,cam.z/1.18);renderCamera()};
+$('fit').onclick=()=>{cam={x:800,y:450,z:.65};renderCamera()};
+function pan(dx,dy){cam.x+=dx/cam.z;cam.y+=dy/cam.z;renderCamera()}
+const moveStep=100;
+$('left').onclick=()=>pan(-moveStep,0);$('right').onclick=()=>pan(moveStep,0);
+$('up').onclick=()=>pan(0,-moveStep);$('down').onclick=()=>pan(0,moveStep);
+$('upLeft').onclick=()=>pan(-moveStep,-moveStep);$('upRight').onclick=()=>pan(moveStep,-moveStep);
+$('downLeft').onclick=()=>pan(-moveStep,moveStep);$('downRight').onclick=()=>pan(moveStep,moveStep);
+$('addShot').onclick=()=>{shots.push({...cam,d:+$('duration').value||3,pause:Math.max(0,+$('pauseDuration').value||0)});shotIndex=shots.length-1;renderShots()};
+$('updateShot').onclick=()=>{shots[shotIndex]={...cam,d:+$('duration').value||3,pause:Math.max(0,+$('pauseDuration').value||0)};renderShots()};
+$('delShot').onclick=()=>{if(shots.length<=1)return;shots.splice(shotIndex,1);shotIndex=Math.max(0,shotIndex-1);cam={...shots[shotIndex]};renderShots();renderCamera()};
+$('duration').onchange=()=>{shots[shotIndex].d=+$('duration').value||3};
+$('pauseDuration').onchange=()=>{shots[shotIndex].pause=Math.max(0,+$('pauseDuration').value||0)};
+$('screen').addEventListener('pointerdown',e=>{if(!editorMode)return;if(e.target!==screen&&e.target!==world)return;selected=null;renderObjects();inspect();dragging={camera:true,sx:e.clientX,sy:e.clientY,ox:cam.x,oy:cam.y}});
+$('screen').addEventListener('pointermove',e=>{if(!editorMode||!dragging||!dragging.camera)return;let s=sceneScale()*cam.z;cam.x=dragging.ox-(e.clientX-dragging.sx)/s;cam.y=dragging.oy-(e.clientY-dragging.sy)/s;renderCamera()});
+$('screen').addEventListener('pointerup',()=>dragging=null);
+function save(){let data={objects,shots,nextId,sceneBackground};let blob=new Blob([JSON.stringify(data)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-cinematic-presentation.FRAME';a.click();URL.revokeObjectURL(a.href)}
+$('saveBtn').onclick=save;
+$('newBtn').onclick=()=>{
+ if((objects.length>0||shots.length>1)&&!confirm('Start a new project? Unsaved changes in this project will be lost.'))return;
+ clearPreviewTimers();
+ objects=[];
+ shots=[{x:800,y:450,z:.65,d:3,pause:1.5}];
+ nextId=1;
+ selected=null;
+ shotIndex=0;
+ cam={x:800,y:450,z:.65};
+ renderObjects();
+ renderShots();
+ inspect();
+ $('duration').value=3;
+ $('pauseDuration').value=1.5;
+};
+$('loadBtn').onclick=()=>$('projectFile').click();
+$('projectFile').onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);objects=d.objects||[];shots=d.shots||[{x:800,y:450,z:.65,d:3}];nextId=d.nextId||1;sceneBackground=d.sceneBackground||{style:'cinematic',color1:'#3a3026',color2:'#15181e'};syncBackgroundControls();shotIndex=0;cam={...shots[0]};selected=null;setEditorMode(true);renderObjects();renderShots();inspect()}catch{alert('That .FRAME project file could not be opened.')}};r.readAsText(f)};
+function renderPlayWorld(){let pw=$('playWorld');pw.innerHTML='';objects.forEach(o=>{let el=document.createElement('div');el.className='obj';el.style.left=o.x+'px';el.style.top=o.y+'px';el.style.width=o.w+'px';el.style.height=o.h+'px';if(o.type==='image'){let im=document.createElement('img');im.src=o.src;el.appendChild(im)}if(o.type==='text'){el.classList.add('textobj');el.textContent=o.text;el.style.fontSize=o.size+'px';el.style.color=o.color;el.style.fontWeight=o.bold?'bold':'normal';el.style.textAlign=o.align||'center';el.style.zIndex='20'}if(o.type==='card'){el.classList.add('card');el.innerHTML=`<div class="tag">${esc(o.tag||'WANTED')}</div><div class="name">${esc(o.name||'SUBJECT 01')}</div><div class="detail">${esc(o.detail||'')}</div>`}if(o.type==='note'){el.classList.add('card');el.innerHTML=`<div class="tag">${esc(o.tag||'CASE NOTE')}</div><div class="detail" style="margin-top:12px;font-size:18px">${esc(o.detail||'')}</div>`}if(o.type==='thread'){el.style.height='5px';el.style.background='#b52e29';el.style.transformOrigin='left center';el.style.transform=`rotate(${o.angle||0}deg)`}pw.appendChild(el)})}
+function ease(t,kind){if(kind==='linear')return t;if(kind==='smooth')return t*t*(3-2*t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+function setPlayCam(c){
+ let el=$('playWorld'), view=$('playScreen');
+ let vw=view.clientWidth, vh=view.clientHeight;
+ let base=Math.min(vw/1600,vh/900), s=base*c.z;
+ let offsetX=(vw-1600*base)/2, offsetY=(vh-900*base)/2;
+ let tx=offsetX+vw/2-c.x*s, ty=offsetY+vh/2-c.y*s;
+ el.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;
+}
+function clearPreviewTimers(){
+ if(playTimer!==null){cancelAnimationFrame(playTimer);playTimer=null}
+ if(pauseTimer!==null){clearTimeout(pauseTimer);pauseTimer=null}
+}
+let previewMoving=false;
+function updatePlayStatus(){
+ const total=shots.length;
+ $('playStatus').textContent=previewMoving
+  ? 'MOVING TO SHOT '+(playIndex+1)+' / '+total
+  : 'SHOT '+(playIndex+1)+' / '+total+' · READY';
+ $('prevPlay').disabled=previewMoving||playIndex<=0;
+ $('nextPlay').disabled=previewMoving||playIndex>=total-1;
+ $('nextPlay').textContent=playIndex>=total-1?'End of presentation':'Next ▶';
+}
+function animateToShot(fromIndex,toIndex){
+ if(toIndex<0||toIndex>=shots.length||previewMoving)return;
+ const a=shots[fromIndex], b=shots[toIndex];
+ if(!a||!b)return;
+
+ clearPreviewTimers();
+ previewMoving=true;
+ playIndex=toIndex;
+ updatePlayStatus();
+
+ const start=performance.now();
+ const duration=Math.max(0.25,Math.min(30,Number(b.d)||Number(a.d)||3))*1000;
+ const easing=$('easing') ? $('easing').value : 'cinema';
+
+ function frame(now){
+  const progress=Math.max(0,Math.min(1,(now-start)/duration));
+  const eased=ease(progress,easing);
+  const current={
+   x:Number(a.x)+(Number(b.x)-Number(a.x))*eased,
+   y:Number(a.y)+(Number(b.y)-Number(a.y))*eased,
+   z:Number(a.z)+(Number(b.z)-Number(a.z))*eased
+  };
+  setPlayCam(current);
+
+  if(progress<1){
+   playTimer=requestAnimationFrame(frame);
+  }else{
+   playTimer=null;
+   previewMoving=false;
+   setPlayCam(b);
+   updatePlayStatus();
+  }
+ }
+ // Start on the next paint so the preview viewport has finished laying out.
+ playTimer=requestAnimationFrame(frame);
+}
+function preview(){
+ clearPreviewTimers();
+ previewMoving=false;
+ renderPlayWorld();
+ $('playView').style.display='flex';
+ playIndex=0;
+ updatePlayStatus();
+ // Wait one frame for the full-screen preview to obtain its real dimensions.
+ requestAnimationFrame(()=>{
+  if($('playView').style.display!=='none')setPlayCam(shots[0]);
+ });
+}
+$('playBtn').onclick=preview;
+$('closePlay').onclick=()=>{
+ clearPreviewTimers();
+ previewMoving=false;
+ $('playView').style.display='none';
+ updatePlayStatus();
+};
+$('nextPlay').onclick=()=>{
+ if(previewMoving||playIndex>=shots.length-1)return;
+ animateToShot(playIndex,playIndex+1);
+};
+$('prevPlay').onclick=()=>{
+ if(previewMoving||playIndex<=0)return;
+ animateToShot(playIndex,playIndex-1);
+};
+window.addEventListener('resize',()=>{renderCamera()});
+$('bgStyle').onchange=readBackgroundControls;
+$('bgColor1').oninput=readBackgroundControls;
+$('bgColor2').oninput=readBackgroundControls;
+syncBackgroundControls();
+$('duration').value=shots[0].d||3;$('pauseDuration').value=shots[0].pause??1.5;setEditorMode(true);renderObjects();renderShots();inspect();
+</script>
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(err => console.warn('FRAME offline setup:', err));
+  });
+}
+</script>
+</body></html>
