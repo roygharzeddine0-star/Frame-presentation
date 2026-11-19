@@ -238,7 +238,7 @@ $("pauseDuration").onchange=()=>{shots[shotIndex].pause=Math.max(0,Number($("pau
 $("screen").addEventListener("pointerdown",e=>{if(!editorMode)return;if(e.target!==screen&&e.target!==world)return;selected=null;renderObjects();inspect();dragging={camera:true,sx:e.clientX,sy:e.clientY,ox:cam.x,oy:cam.y}});
 $("screen").addEventListener("pointermove",e=>{if(!editorMode||!dragging||!dragging.camera)return;const s=sceneScale()*cam.z;cam.x=dragging.ox-(e.clientX-dragging.sx)/s;cam.y=dragging.oy-(e.clientY-dragging.sy)/s;renderCamera()});
 $("screen").addEventListener("pointerup",()=>dragging=null);$("screen").addEventListener("pointercancel",()=>dragging=null);
-function save(){const data={objects,shots,nextId,sceneBackground};const blob=new Blob([JSON.stringify(data)],{type:"application/json"});const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download="my-cinematic-presentation.FRAME";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function save(){const data={objects,shots,nextId,sceneBackground};const blob=new Blob([JSON.stringify(data)],{type:"application/octet-stream"});const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download="my-cinematic-presentation.FRAME";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $("saveBtn").onclick=save;
 $("newBtn").onclick=()=>{if((objects.length||shots.length>1)&&!confirm("Start a new project? Unsaved changes will be lost."))return;clearPreviewTimers();objects=[];shots=[{x:800,y:450,z:.65,d:3,pause:1.5}];nextId=1;selected=null;shotIndex=0;cam={x:800,y:450,z:.65};renderObjects();renderShots();inspect();$("duration").value=3;$("pauseDuration").value=1.5};
 $("loadBtn").onclick=()=>$("projectFile").click();
