@@ -1083,6 +1083,73 @@ camera(shots[0]);
 </html>`}
 function exportOffline(){const html=standaloneHTML(projectData()),blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='FRAME-Presentation.html';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}$('exportBtn').onclick=exportOffline;
 function clearPreview(){if(animFrame)cancelAnimationFrame(animFrame);animFrame=null;clearTimeout(autoTimer);autoTimer=null;previewMoving=false}function playLabel(){$('playStatus').textContent=`SHOT ${playIndex+1} / ${shots.length}`;$('prevPlay').disabled=playIndex===0;$('nextPlay').disabled=playIndex===shots.length-1}function renderPlay(){const pw=$('playWorld');pw.innerHTML='';objects.forEach(o=>{const el=document.createElement('div');el.className='obj';el.style.left=o.x+'px';el.style.top=o.y+'px';el.style.width=o.w+'px';el.style.height=o.h+'px';if(o.type==='image'){const im=document.createElement('img');im.src=o.src;el.appendChild(im)}else textStyle(el,o);pw.appendChild(el)})}function playCamera(s){const base=Math.min($('playScreen').clientWidth/1600,$('playScreen').clientHeight/900),k=base*s.z,vw=$('playScreen').clientWidth,vh=$('playScreen').clientHeight,x=(vw-1600*base)/2+vw/2-s.x*k,y=(vh-900*base)/2+vh/2-s.y*k;$('playWorld').style.transform=`translate(${x}px,${y}px) scale(${k})`}function goPlay(n){if(n<0||n>=shots.length||previewMoving)return;clearPreview();const a=shots[playIndex],b=shots[n],start=performance.now(),dur=Math.max(.25,Number(b.d)||3)*1000;playIndex=n;previewMoving=true;playLabel();function f(now){const p=clamp((now-start)/dur,0,1),t=$('easing').value==='linear'?p:p*p*(3-2*p);playCamera({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t});if(p<1)animFrame=requestAnimationFrame(f);else{animFrame=null;previewMoving=false;playCamera(b);playLabel();if(auto)autoTimer=setTimeout(()=>{if(playIndex<shots.length-1)goPlay(playIndex+1);else{auto=false;$('autoPlay').textContent='Auto play'}},Math.max(0,b.pause||0)*1000)}}animFrame=requestAnimationFrame(f)}$('playBtn').onclick=()=>{clearPreview();auto=false;$('autoPlay').textContent='Auto play';renderPlay();$('playView').style.display='flex';playIndex=0;requestAnimationFrame(()=>playCamera(shots[0]));playLabel()};$('closePlay').onclick=()=>{$('playView').style.display='none';clearPreview();auto=false};$('nextPlay').onclick=()=>goPlay(playIndex+1);$('prevPlay').onclick=()=>goPlay(playIndex-1);$('autoPlay').onclick=()=>{auto=!auto;$('autoPlay').textContent=auto?'Pause auto':'Auto play';if(auto){if(playIndex<shots.length-1)goPlay(playIndex+1);else{auto=false;$('autoPlay').textContent='Auto play'}}else clearTimeout(autoTimer)};window.addEventListener('resize',renderCam);syncBG();$('duration').value=shots[0].d;$('pauseDuration').value=shots[0].pause;renderObjects();renderShots();inspect();
+   
+const CACHE_VERSION = "frame-v1";
+const CACHE_NAME = `frame-cache-${CACHE_VERSION}`;
+
+const FILES_TO_CACHE = [
+    "./",
+    "./index.html"
+];
+
+// Install the new cache
+self.addEventListener("install", (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(FILES_TO_CACHE);
+        })
+    );
+
+    self.skipWaiting();
+});
+
+// Remove old caches
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames
+                    .filter((name) =>
+                        name.startsWith("frame-cache-") &&
+                        name !== CACHE_NAME
+                    )
+                    .map((name) => caches.delete(name))
+            );
+        })
+    );
+
+    self.clients.claim();
+});
+
+// Serve cached files when offline
+self.addEventListener("fetch", (event) => {
+    if (event.request.method !== "GET") return;
+
+    event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+
+            return fetch(event.request).then((response) => {
+                if (
+                    response &&
+                    response.status === 200 &&
+                    response.type === "basic"
+                ) {
+                    const responseCopy = response.clone();
+
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseCopy);
+                    });
+                }
+
+                return response;
+            });
+        })
+    );
+});
+
   </script>
  </body>
 </html>
