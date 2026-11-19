@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "frame-studio-v4";
+const CACHE_NAME = "frame-studio-v5";
 
 const CORE = [
   "./",
