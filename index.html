@@ -357,8 +357,32 @@ function inspect(){
  if(o.type==='card'||o.type==='note')html+=`<div class="field"><label>Heading</label><input id="ptag" value="${esc(o.tag||'')}"></div><div class="field"><label>Name / details</label><input id="pname" value="${esc(o.name||o.detail||'')}"></div><div class="field"><label>Subtitle</label><input id="pdetail" value="${esc(o.detail||'')}"></div>`;
  html+=`<div class="row"><div class="field"><label>X</label><input id="px" type="number" value="${Math.round(o.x)}"></div><div class="field"><label>Y</label><input id="py" type="number" value="${Math.round(o.y)}"></div></div><div class="row"><div class="field"><label>Width</label><input id="pw" type="number" value="${Math.round(o.w)}"></div><div class="field"><label>Height</label><input id="ph" type="number" value="${Math.round(o.h)}"></div></div><button id="applyProps" style="width:100%">Apply changes</button>`;
  box.innerHTML=html;
- $('applyProps').onclick=()=>{let val=(id,old)=>$(id)?$(id).value:old;o.x=+val('px',o.x);o.y=+val('py',o.y);o.w=Math.max(20,+val('pw',o.w));o.h=Math.max(20,+val('ph',o.h));if(o.type==='text'){o.text=val('ptext',o.text);o.size=+val('psize',o.size);o.color=val('pcolor',o.color)}if(o.type==='card'||o.type==='note'){o.tag=val('ptag',o.tag);if(o.type==='card')o.name=val('pname',o.name);o.detail=val('pdetail',o.detail)}renderObjects();inspect()};
-}
+$('applyProps').onclick=()=>{
+ let val=(id,old)=>$(id)?$(id).value:old;
+
+ o.x=+val('px',o.x);
+ o.y=+val('py',o.y);
+ o.w=Math.max(20,+val('pw',o.w));
+ o.h=Math.max(20,+val('ph',o.h));
+
+ if(o.type==='text'){
+  o.text=val('ptext',o.text);
+  o.size=Math.max(8,+val('psize',o.size));
+  o.color=val('pcolor',o.color);
+  o.fontFamily=val('pfont',o.fontFamily||'Georgia');
+  o.bold=$('pbold').checked;
+  o.italic=$('pitalic').checked;
+  o.underline=$('punderline').checked;
+  o.align=val('palign',o.align||'center');
+  o.letterSpacing=+val('pspacing',o.letterSpacing||0);
+  o.lineHeight=+val('pline',o.lineHeight||1.15);
+  o.boxColor=val('pboxcolor',o.boxColor||'#15181e');
+  o.boxFill=$('pbox').checked;
+ }
+
+ renderObjects();
+ inspect();
+};
 function setEditorMode(enabled){
  editorMode=!!enabled;
  $('editorMode').classList.toggle('active',editorMode);
