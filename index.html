@@ -512,4 +512,37 @@ window.addEventListener("appinstalled", () => {
 ">
   FRAME v1.0.0
  </div>
+  <script>
+(async function checkFrameUpdate() {
+  if (!("serviceWorker" in navigator) || !("caches" in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const markerURL = new URL(
+      "__frame_update_pending__",
+      registration.scope
+    ).href;
+
+    const cache = await caches.open("frame-studio-v2");
+    const marker = await cache.match(markerURL);
+
+    if (!marker) return;
+
+    await cache.delete(markerURL);
+
+    const screen = document.getElementById("frameUpdate");
+    if (!screen) return;
+
+    screen.classList.add("show");
+
+    window.setTimeout(() => {
+      screen.classList.remove("show");
+      window.setTimeout(() => screen.remove(), 600);
+    }, 2500);
+
+  } catch (error) {
+    console.warn("FRAME update check:", error);
+  }
+})();
+  </script>
 </body></html>
