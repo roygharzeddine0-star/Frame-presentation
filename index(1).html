@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="FRAME">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/frame-192.png" type="image/png">
+<title>FRAME — Cinematic Presentation Studio</title>
+<style>
+:root{--bg:#0b0d12;--panel:#141821;--panel2:#1b2230;--line:#2b3445;--text:#eef2f8;--muted:#9ba8ba;--gold:#d6ad70;--blue:#79aef7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Arial;overflow:hidden}
+button,input,select,textarea{font:inherit}
+button{border:1px solid var(--line);background:#202838;color:var(--text);padding:9px 12px;border-radius:9px;cursor:pointer}
+button:hover{border-color:var(--gold)}button:disabled{opacity:.42;cursor:not-allowed}
+button.primary{background:var(--gold);color:#17130e;border-color:var(--gold);font-weight:700}
+button.active{border-color:var(--gold);color:var(--gold)}
+.top{height:58px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);background:#10141c}
+.logo{font-weight:900;letter-spacing:3px;color:var(--gold);font-size:18px}
+.sub{color:var(--muted);font-size:12px}.spacer{flex:1}
+.layout{height:calc(100dvh - 58px);display:grid;grid-template-columns:235px minmax(0,1fr) 255px;grid-template-rows:minmax(0,1fr) 160px}
+.panel{background:var(--panel);padding:14px;overflow:auto;border-right:1px solid var(--line)}
+.right{border-right:0;border-left:1px solid var(--line)}
+h3{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin:3px 0 12px}
+.group{margin-bottom:20px}.tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tools button{font-size:12px;padding:10px 6px}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:9px}
+.stageWrap{display:flex;flex-direction:column;min-width:0;min-height:0;background:#090b10}
+.stageHead{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:var(--muted);font-size:12px}
+.viewport{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden}
+#screen{position:relative;width:min(100%,1100px);aspect-ratio:16/9;background:#242a32;overflow:hidden;box-shadow:0 15px 55px #0009;border:1px solid #3a4352;touch-action:none}
+#screen:before,#playScreen:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--scene-pattern,none);background-size:100% 100%;z-index:0}
+#world,#playWorld{z-index:1}
+#world{position:absolute;width:1600px;height:3000px;left:0;top:0;transform-origin:0 0;background:transparent!important;overflow:visible}
+#world:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--scene-pattern,none);background-size:100% 100%;z-index:0}
+.obj{position:absolute;user-select:none;touch-action:none;cursor:move;transform-origin:center center}
+.obj.selected{outline:2px solid var(--gold);outline-offset:4px}
+.obj img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.obj.textobj{white-space:pre-wrap;z-index:20;display:block;overflow:visible;word-break:break-word}
+.timeline{grid-column:1/4;background:#111620;border-top:1px solid var(--line);padding:10px 14px;overflow:auto}
+.thead{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.timelineBody{display:flex;gap:10px;align-items:stretch;min-width:0}
+.editorTile{flex:0 0 120px;height:90px;border:1px solid var(--line);border-radius:9px;background:#202838;color:var(--text);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;font-weight:800;letter-spacing:1px}
+.editorTile.active{border:2px solid var(--gold);background:#30291f;color:var(--gold)}
+.editorTile small{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0}
+.frames{display:flex;gap:9px;align-items:stretch;overflow-x:auto;min-width:0;padding-bottom:2px}
+.shot-locked #screen{cursor:default}.shot-locked .obj{cursor:default!important}.shot-locked .obj.selected{outline:none}
+.frame{min-width:135px;height:90px;border:1px solid var(--line);border-radius:9px;background:#1b2230;padding:9px;cursor:pointer;position:relative}
+.frame.sel{border:2px solid var(--gold);background:#2b2b2a}
+.frame b{display:block;font-size:12px}.frame small{color:var(--muted);font-size:10px}
+.frame .num{position:absolute;right:8px;bottom:6px;color:#758197;font-size:10px}
+.field{display:flex;flex-direction:column;gap:5px;margin:9px 0;min-width:0}
+.field label{color:var(--muted);font-size:11px}
+.field input,.field select,.field textarea{background:#0d121a;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:8px;width:100%;min-width:0}
+.field textarea{resize:vertical;min-height:100px;font-family:inherit}
+.field input[type=checkbox]{width:auto;accent-color:var(--gold)}
+.field input[type=color]{height:38px;padding:3px}
+.row{display:flex;gap:8px;align-items:flex-start}.row>.field{flex:1;min-width:0}
+.empty{color:var(--muted);font-size:12px;line-height:1.6}
+.directionPad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px;align-items:center}
+.directionPad button{min-width:0;padding:9px 4px;font-size:18px;line-height:1.1}
+.padCenter{display:grid;place-items:center;color:#687487;font-size:12px;min-height:38px}
+.letter{position:absolute;left:0;right:0;height:7%;background:#000;pointer-events:none;opacity:.8;z-index:3}
+.letter.top{top:0}.letter.bottom{bottom:0}
+#playView{display:none;position:fixed;inset:0;background:#000;z-index:10;align-items:center;justify-content:center}
+#playScreen{width:min(100vw,177.78vh);aspect-ratio:16/9;position:relative;overflow:hidden;background:#17191e}
+#playWorld{position:absolute;width:1600px;height:3000px;transform-origin:0 0;background:transparent!important;overflow:visible}
+#playWorld:before{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--scene-pattern,none);background-size:100% 100%;z-index:0}
+.playStatus{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:12;color:#cbd3df;background:#141821dd;padding:7px 12px;border:1px solid #465064;border-radius:9px;font-size:11px;letter-spacing:1px}
+.playbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:12;background:#141821dd;padding:8px;border:1px solid #465064;border-radius:12px}
+#frameUpdate{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#0b0d12;opacity:0;pointer-events:none;transition:opacity .5s ease}
+#frameUpdate.show{opacity:1;pointer-events:auto}
+.updateLogo{color:#d6ad70;font-size:clamp(38px,10vw,65px);font-weight:900;letter-spacing:12px;animation:logoIn 1s ease both}
+.updateText{color:#9ba8ba;font-size:11px;letter-spacing:4px;animation:textIn 1.2s ease both}
+.updateLine{width:0;height:2px;background:#d6ad70;box-shadow:0 0 15px #d6ad70;animation:lineIn 1.3s .3s ease forwards}
+@keyframes logoIn{from{opacity:0;transform:scale(.8);letter-spacing:25px}to{opacity:1;transform:scale(1);letter-spacing:12px}}
+@keyframes textIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes lineIn{to{width:min(260px,65vw)}}
+.version{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);color:#777;font-size:11px;letter-spacing:2px;opacity:.7;pointer-events:none;z-index:9999}
+@media(max-width:850px){.layout{grid-template-columns:155px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 150px}.right{display:none}.timeline{grid-column:1/3}.panel{padding:10px}.tools{grid-template-columns:1fr}.top .sub{display:none}}
+@media(max-width:560px){.layout{grid-template-columns:112px minmax(0,1fr)}.panel{padding:7px}.tools button{font-size:10px;padding:8px 3px}.hint{font-size:10px}.top{padding:0 9px;gap:6px}.top button{padding:7px;font-size:11px}.stageHead{padding:0 8px}.viewport{padding:5px}.playbar{gap:4px;padding:5px}.playbar button{padding:7px;font-size:11px}}
+</style>
+</head>
+<body>
+<div id="frameUpdate" aria-live="polite"><div class="updateLogo">FRAME</div><div class="updateLine"></div><div class="updateText">SUCCESSFULLY UPDATED</div></div>
+<header class="top">
+ <div class="logo">FRAME</div><div class="sub">CINEMATIC PRESENTATION STUDIO · ALPHA</div><div class="spacer"></div>
+ <button id="installBtn" class="primary">⬇ Install FRAME</button>
+ <button id="newBtn">＋ New</button><button id="saveBtn">Save</button><button id="loadBtn">Open</button><button class="primary" id="playBtn">▶ Preview</button>
+ <input id="projectFile" type="file" accept=".FRAME,.frame,.json,application/json" hidden>
+</header>
+<div class="layout">
+ <aside class="panel">
+  <div class="group"><h3>Build your scene</h3><div class="tools">
+   <button id="addImage">＋ Add photo</button><button id="addText">T Text box</button><button id="deleteObj">✕ Delete item</button>
+  </div><input id="imageFile" type="file" accept="image/*" hidden>
+  <div class="hint">Drag items around the large scene. Select an item to edit it. Your scene is one continuous canvas — not separate slide backgrounds.</div></div>
+  <div class="group"><h3>Scene background</h3>
+   <div class="field"><label>Background style</label><select id="bgStyle"><option value="cinematic">Cinematic glow</option><option value="gradient">Diagonal gradient</option><option value="solid">Solid colour</option><option value="grid">Subtle grid</option><option value="blueprint">Blueprint grid</option></select></div>
+   <div class="field"><label>Primary colour</label><input id="bgColor1" type="color" value="#3a3026"></div>
+   <div class="field"><label>Secondary colour</label><input id="bgColor2" type="color" value="#15181e"></div>
+   <div class="hint">The background fills the entire continuous scene and stays consistent in Preview.</div>
+  </div>
+  <div class="group"><h3>Camera shot</h3><button class="primary" style="width:100%" id="addShot">＋ Add camera shot</button><div class="hint">Move the camera view, zoom in or out, then add a shot. Preview smoothly travels between your saved camera positions.</div></div>
+  <div class="group"><h3>Camera controls</h3><div class="row"><button id="zoomOut">− Zoom</button><button id="zoomIn">＋ Zoom</button></div>
+   <div class="directionPad"><button id="upLeft">↖</button><button id="up">↑</button><button id="upRight">↗</button><button id="left">←</button><span class="padCenter">●</span><button id="right">→</button><button id="downLeft">↙</button><button id="down">↓</button><button id="downRight">↘</button></div>
+   <button id="fit" style="width:100%;margin-top:7px">Fit whole scene</button>
+  </div>
+ </aside>
+ <main class="stageWrap"><div class="stageHead"><span>SCENE VIEW · 16:9</span><span id="camReadout">Zoom 65%</span></div><div class="viewport"><div id="screen"><div id="world"></div><div class="letter top"></div><div class="letter bottom"></div></div></div></main>
+ <aside class="panel right">
+  <div class="group"><h3>Selected item</h3><div id="inspector" class="empty">Select an item in the scene to edit its properties.</div></div>
+  <div class="group"><h3>Shot settings</h3>
+   <div class="field"><label>Transition duration (seconds)</label><input id="duration" type="number" min=".5" max="30" step=".5" value="3"></div>
+   <div class="field"><label>Pause after this shot (seconds)</label><input id="pauseDuration" type="number" min="0" max="60" step=".5" value="1.5"></div>
+   <div class="field"><label>Camera easing</label><select id="easing"><option value="cinema">Cinematic ease</option><option value="smooth">Smooth</option><option value="linear">Linear</option></select></div>
+   <button id="updateShot" style="width:100%">Update selected shot</button>
+  </div>
+  <div class="hint">Tip: Start with a close camera shot, then add another shot zoomed out to reveal the full scene.</div>
+ </aside>
+ <section class="timeline"><div class="thead"><h3 style="margin:0">Camera timeline</h3><span class="sub">Camera positions in the same scene</span><div class="spacer"></div><button id="delShot">Remove shot</button></div>
+  <div class="timelineBody"><button class="editorTile active" id="editorMode"><span>✎ EDITOR</span><small>Free scene editing</small></button><div class="frames" id="frames"></div></div>
+ </section>
+</div>
+<div id="playView"><div id="playScreen"><div id="playWorld"></div><div class="letter top"></div><div class="letter bottom"></div></div><div class="playStatus" id="playStatus">SHOT 1 / 1 · READY</div><div class="playbar"><button id="prevPlay">◀ Previous</button><button id="nextPlay" class="primary">Next ▶</button><button id="closePlay">✕ Exit preview</button></div></div>
+<div class="version">FRAME v1.0.0</div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const world=$("world"),screen=$("screen");
+let sceneBackground={style:"cinematic",color1:"#3a3026",color2:"#15181e"};
+let objects=[],shots=[{x:800,y:450,z:.65,d:3,pause:1.5}],selected=null,shotIndex=0,nextId=1,editorMode=true;
+let cam={x:800,y:450,z:.65},dragging=null,playTimer=null,pauseTimer=null,playIndex=0,previewMoving=false;
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function applyBackground(){
+ const {style,color1,color2}=sceneBackground;let base="",pattern="none";
+ if(style==="solid")base=`linear-gradient(${color1},${color1})`;
+ else if(style==="gradient")base=`linear-gradient(135deg,${color1} 0%,${color2} 100%)`;
+ else if(style==="grid"){base=`radial-gradient(ellipse at 50% 35%,${color1} 0%,${color2} 100%)`;pattern="repeating-linear-gradient(0deg,transparent 0 79px,#ffffff12 80px 81px),repeating-linear-gradient(90deg,transparent 0 79px,#ffffff12 80px 81px)"}
+ else if(style==="blueprint"){base=`linear-gradient(135deg,${color1},${color2})`;pattern="repeating-linear-gradient(0deg,transparent 0 39px,#9ed8ff20 40px 41px),repeating-linear-gradient(90deg,transparent 0 39px,#9ed8ff20 40px 41px),repeating-linear-gradient(0deg,transparent 0 199px,#9ed8ff35 200px 202px),repeating-linear-gradient(90deg,transparent 0 199px,#9ed8ff35 200px 202px)"}
+ else base=`radial-gradient(ellipse at 50% 35%,${color1} 0%,${color2} 82%)`;
+ [screen,$("playScreen")].forEach(el=>{if(!el)return;el.style.backgroundColor=color2;el.style.backgroundImage=base;el.style.backgroundSize="100% 100%";el.style.backgroundRepeat="no-repeat";el.style.setProperty("--scene-pattern",pattern)});
+}
+function syncBackgroundControls(){$("bgStyle").value=sceneBackground.style;$("bgColor1").value=sceneBackground.color1;$("bgColor2").value=sceneBackground.color2;applyBackground()}
+function readBackgroundControls(){sceneBackground={style:$("bgStyle").value,color1:$("bgColor1").value,color2:$("bgColor2").value};applyBackground()}
+function sceneScale(){return screen.clientWidth/1600}
+function renderCamera(){const s=sceneScale()*cam.z,x=screen.clientWidth/2-cam.x*s,y=screen.clientHeight/2-cam.y*s;world.style.transform=`translate(${x}px,${y}px) scale(${s})`;$("camReadout").textContent=`Zoom ${Math.round(cam.z*100)}%`}
+function styleText(el,o){
+ el.classList.add("textobj");el.textContent=o.text??"";
+ el.style.fontFamily=o.fontFamily||"Georgia,serif";el.style.fontSize=(o.size||48)+"px";el.style.color=o.color||"#f5e8d1";
+ el.style.fontWeight=o.bold?"700":"400";el.style.fontStyle=o.italic?"italic":"normal";el.style.textDecoration=o.underline?"underline":"none";
+ el.style.textAlign=o.align||"center";el.style.letterSpacing=(o.letterSpacing||0)+"px";el.style.lineHeight=o.lineHeight||1.15;
+ el.style.padding=o.boxFill?"12px":"0";el.style.background=o.boxFill?(o.boxColor||"#15181e"):"transparent";
+ el.style.textShadow=o.boxFill?"none":"0 3px 14px #000";
+}
+function renderObjects(){
+ world.innerHTML="";
+ objects.forEach(o=>{
+  const el=document.createElement("div");el.className="obj"+(o.id===selected?" selected":"");el.dataset.id=o.id;
+  el.style.left=o.x+"px";el.style.top=o.y+"px";el.style.width=o.w+"px";el.style.height=o.h+"px";
+  if(o.type==="image"){const im=document.createElement("img");im.src=o.src;el.appendChild(im)}
+  if(o.type==="text")styleText(el,o);
+  el.addEventListener("pointerdown",e=>{if(!editorMode||playTimer!==null)return;e.stopPropagation();select(o.id);dragging={id:o.id,sx:e.clientX,sy:e.clientY,ox:o.x,oy:o.y};el.setPointerCapture(e.pointerId)});
+  el.addEventListener("pointermove",e=>{if(!dragging||dragging.id!==o.id)return;const scale=sceneScale()*cam.z;o.x=dragging.ox+(e.clientX-dragging.sx)/scale;o.y=dragging.oy+(e.clientY-dragging.sy)/scale;el.style.left=o.x+"px";el.style.top=o.y+"px";updatePositionFields()});
+  el.addEventListener("pointerup",()=>dragging=null);el.addEventListener("pointercancel",()=>dragging=null);
+  world.appendChild(el);
+ });
+ renderCamera();
+}
+function updatePositionFields(){if(!selected)return;const o=objects.find(x=>x.id===selected);if(!o)return;if($("px"))$("px").value=Math.round(o.x);if($("py"))$("py").value=Math.round(o.y)}
+function select(id){selected=id;renderObjects();inspect()}
+function add(o){o.id=nextId++;objects.push(o);select(o.id)}
+function textInspector(o){
+ return `<div class="field"><label>Text content</label><textarea id="ptext" rows="5">${esc(o.text)}</textarea></div>
+ <div class="field"><label>Font family</label><select id="pfont">
+ <option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Impact">Impact</option>
+ </select></div>
+ <div class="row"><div class="field"><label>Font size</label><input id="psize" type="number" min="8" max="300" value="${o.size||48}"></div><div class="field"><label>Text colour</label><input id="pcolor" type="color" value="${o.color||"#f5e8d1"}"></div></div>
+ <div class="row"><div class="field"><label><input id="pbold" type="checkbox" ${o.bold?"checked":""}> Bold</label></div><div class="field"><label><input id="pitalic" type="checkbox" ${o.italic?"checked":""}> Italic</label></div><div class="field"><label><input id="punderline" type="checkbox" ${o.underline?"checked":""}> Underline</label></div></div>
+ <div class="field"><label>Alignment</label><select id="palign"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>
+ <div class="row"><div class="field"><label>Letter spacing</label><input id="pspacing" type="number" step="1" value="${o.letterSpacing||0}"></div><div class="field"><label>Line spacing</label><input id="pline" type="number" min=".5" max="3" step=".1" value="${o.lineHeight||1.15}"></div></div>
+ <div class="field"><label>Background colour</label><input id="pboxcolor" type="color" value="${o.boxColor||"#15181e"}"><label><input id="pbox" type="checkbox" ${o.boxFill?"checked":""}> Enable text background</label></div>`;
+}
+function inspect(){
+ const o=objects.find(x=>x.id===selected),box=$("inspector");
+ if(!o){box.className="empty";box.textContent="Select an item in the scene to edit its properties.";return}
+ box.className="";
+ let html=`<div class="field"><label>Item type</label><input value="${o.type}" disabled></div>`;
+ if(o.type==="text")html+=textInspector(o);
+ html+=`<div class="row"><div class="field"><label>X</label><input id="px" type="number" value="${Math.round(o.x)}"></div><div class="field"><label>Y</label><input id="py" type="number" value="${Math.round(o.y)}"></div></div>
+ <div class="row"><div class="field"><label>Width</label><input id="pw" type="number" value="${Math.round(o.w)}"></div><div class="field"><label>Height</label><input id="ph" type="number" value="${Math.round(o.h)}"></div></div>
+ <button id="applyProps" style="width:100%">Apply changes</button>`;
+ box.innerHTML=html;
+ if(o.type==="text"){$("pfont").value=o.fontFamily||"Georgia";$("palign").value=o.align||"center"}
+ $("applyProps").onclick=()=>{
+  const val=(id,old)=>$(id)?$(id).value:old;
+  o.x=Number(val("px",o.x));o.y=Number(val("py",o.y));o.w=Math.max(20,Number(val("pw",o.w)));o.h=Math.max(20,Number(val("ph",o.h)));
+  if(o.type==="text"){
+   o.text=val("ptext",o.text);o.size=clamp(Number(val("psize",o.size||48))||48,8,300);o.color=val("pcolor",o.color||"#f5e8d1");
+   o.fontFamily=val("pfont",o.fontFamily||"Georgia");o.bold=$("pbold").checked;o.italic=$("pitalic").checked;o.underline=$("punderline").checked;
+   o.align=val("palign",o.align||"center");o.letterSpacing=Number(val("pspacing",0))||0;o.lineHeight=clamp(Number(val("pline",1.15))||1.15,.5,3);
+   o.boxColor=val("pboxcolor",o.boxColor||"#15181e");o.boxFill=$("pbox").checked;
+  }
+  renderObjects();inspect();
+ };
+}
+function setEditorMode(enabled){
+ editorMode=!!enabled;$("editorMode").classList.toggle("active",editorMode);document.querySelector(".layout").classList.toggle("shot-locked",!editorMode);$("editorMode").setAttribute("aria-pressed",String(editorMode));
+ ["addImage","addText","deleteObj","addShot","zoomOut","zoomIn","fit","left","right","up","down","upLeft","upRight","downLeft","downRight","updateShot","delShot","bgStyle","bgColor1","bgColor2","duration","pauseDuration","easing"].forEach(id=>{const el=$(id);if(el)el.disabled=!editorMode});
+ if(!editorMode){selected=null;renderObjects();inspect()}renderShots();
+}
+$("editorMode").onclick=()=>setEditorMode(true);
+function renderShots(){
+ $("frames").innerHTML="";
+ shots.forEach((s,i)=>{const el=document.createElement("div");el.className="frame"+(!editorMode&&i===shotIndex?" sel":"");el.innerHTML=`<b>${i===0?"OPENING SHOT":"SHOT "+(i+1)}</b><small>Zoom ${Math.round(s.z*100)}% · X ${Math.round(s.x)} Y ${Math.round(s.y)}</small><span class="num">${String(i+1).padStart(2,"0")}</span>`;
+ el.onclick=()=>{shotIndex=i;cam={x:s.x,y:s.y,z:s.z};$("duration").value=s.d||3;$("pauseDuration").value=s.pause??1.5;setEditorMode(false);renderCamera()};$("frames").appendChild(el)});
+}
+$("addImage").onclick=()=>$("imageFile").click();
+$("imageFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>add({type:"image",src:r.result,x:cam.x-240,y:cam.y-180,w:480,h:360});r.readAsDataURL(f);e.target.value=""};
+$("addText").onclick=()=>{const w=760,h=180;add({type:"text",text:"YOUR CINEMATIC TITLE",x:cam.x-w/2,y:cam.y-h/2,w,h,size:64,color:"#f5e8d1",bold:true,italic:false,underline:false,align:"center",fontFamily:"Georgia",letterSpacing:0,lineHeight:1.15,boxFill:false,boxColor:"#15181e"})};
+$("deleteObj").onclick=()=>{objects=objects.filter(o=>o.id!==selected);selected=null;renderObjects();inspect()};
+$("zoomIn").onclick=()=>{cam.z=Math.min(2.8,cam.z*1.18);renderCamera()};
+$("zoomOut").onclick=()=>{cam.z=Math.max(.25,cam.z/1.18);renderCamera()};
+$("fit").onclick=()=>{cam={x:800,y:450,z:.65};renderCamera()};
+function pan(dx,dy){cam.x+=dx/cam.z;cam.y+=dy/cam.z;renderCamera()}
+const moveStep=100;
+$("left").onclick=()=>pan(-moveStep,0);$("right").onclick=()=>pan(moveStep,0);$("up").onclick=()=>pan(0,-moveStep);$("down").onclick=()=>pan(0,moveStep);
+$("upLeft").onclick=()=>pan(-moveStep,-moveStep);$("upRight").onclick=()=>pan(moveStep,-moveStep);$("downLeft").onclick=()=>pan(-moveStep,moveStep);$("downRight").onclick=()=>pan(moveStep,moveStep);
+$("addShot").onclick=()=>{shots.push({...cam,d:Number($("duration").value)||3,pause:Math.max(0,Number($("pauseDuration").value)||0)});shotIndex=shots.length-1;renderShots()};
+$("updateShot").onclick=()=>{shots[shotIndex]={...cam,d:Number($("duration").value)||3,pause:Math.max(0,Number($("pauseDuration").value)||0)};renderShots()};
+$("delShot").onclick=()=>{if(shots.length<=1)return;shots.splice(shotIndex,1);shotIndex=Math.max(0,shotIndex-1);cam={...shots[shotIndex]};renderShots();renderCamera()};
+$("duration").onchange=()=>{shots[shotIndex].d=Number($("duration").value)||3};
+$("pauseDuration").onchange=()=>{shots[shotIndex].pause=Math.max(0,Number($("pauseDuration").value)||0)};
+$("screen").addEventListener("pointerdown",e=>{if(!editorMode)return;if(e.target!==screen&&e.target!==world)return;selected=null;renderObjects();inspect();dragging={camera:true,sx:e.clientX,sy:e.clientY,ox:cam.x,oy:cam.y}});
+$("screen").addEventListener("pointermove",e=>{if(!editorMode||!dragging||!dragging.camera)return;const s=sceneScale()*cam.z;cam.x=dragging.ox-(e.clientX-dragging.sx)/s;cam.y=dragging.oy-(e.clientY-dragging.sy)/s;renderCamera()});
+$("screen").addEventListener("pointerup",()=>dragging=null);$("screen").addEventListener("pointercancel",()=>dragging=null);
+function save(){const data={objects,shots,nextId,sceneBackground};const blob=new Blob([JSON.stringify(data)],{type:"application/json"});const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download="my-cinematic-presentation.FRAME";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$("saveBtn").onclick=save;
+$("newBtn").onclick=()=>{if((objects.length||shots.length>1)&&!confirm("Start a new project? Unsaved changes will be lost."))return;clearPreviewTimers();objects=[];shots=[{x:800,y:450,z:.65,d:3,pause:1.5}];nextId=1;selected=null;shotIndex=0;cam={x:800,y:450,z:.65};renderObjects();renderShots();inspect();$("duration").value=3;$("pauseDuration").value=1.5};
+$("loadBtn").onclick=()=>$("projectFile").click();
+$("projectFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);objects=Array.isArray(d.objects)?d.objects:[];shots=Array.isArray(d.shots)&&d.shots.length?d.shots:[{x:800,y:450,z:.65,d:3,pause:1.5}];nextId=d.nextId||Math.max(0,...objects.map(o=>o.id||0))+1;sceneBackground=d.sceneBackground||{style:"cinematic",color1:"#3a3026",color2:"#15181e"};shotIndex=0;cam={...shots[0]};selected=null;syncBackgroundControls();setEditorMode(true);renderObjects();renderShots();inspect()}catch{alert("That .FRAME project file could not be opened.")}};r.readAsText(f);e.target.value=""};
+function renderPlayWorld(){
+ const pw=$("playWorld");pw.innerHTML="";
+ objects.forEach(o=>{const el=document.createElement("div");el.className="obj";el.style.left=o.x+"px";el.style.top=o.y+"px";el.style.width=o.w+"px";el.style.height=o.h+"px";
+ if(o.type==="image"){const im=document.createElement("img");im.src=o.src;el.appendChild(im)}
+ if(o.type==="text")styleText(el,o);
+ pw.appendChild(el)});
+}
+function ease(t,kind){if(kind==="linear")return t;if(kind==="smooth")return t*t*(3-2*t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+function setPlayCam(c){const el=$("playWorld"),view=$("playScreen"),vw=view.clientWidth,vh=view.clientHeight,base=Math.min(vw/1600,vh/900),s=base*c.z,ox=(vw-1600*base)/2,oy=(vh-900*base)/2;el.style.transform=`translate(${ox+vw/2-c.x*s}px,${oy+vh/2-c.y*s}px) scale(${s})`}
+function clearPreviewTimers(){if(playTimer!==null){cancelAnimationFrame(playTimer);playTimer=null}if(pauseTimer!==null){clearTimeout(pauseTimer);pauseTimer=null}}
+function updatePlayStatus(){$("playStatus").textContent=previewMoving?`MOVING TO SHOT ${playIndex+1} / ${shots.length}`:`SHOT ${playIndex+1} / ${shots.length} · READY`;$("prevPlay").disabled=previewMoving||playIndex<=0;$("nextPlay").disabled=previewMoving||playIndex>=shots.length-1;$("nextPlay").textContent=playIndex>=shots.length-1?"End of presentation":"Next ▶"}
+function animateToShot(fromIndex,toIndex){
+ if(toIndex<0||toIndex>=shots.length||previewMoving)return;const a=shots[fromIndex],b=shots[toIndex];if(!a||!b)return;
+ clearPreviewTimers();previewMoving=true;playIndex=toIndex;updatePlayStatus();
+ const start=performance.now(),duration=clamp(Number(b.d)||Number(a.d)||3,.25,30)*1000,kind=$("easing").value;
+ function frame(now){const p=clamp((now-start)/duration,0,1),t=ease(p,kind);setPlayCam({x:Number(a.x)+(Number(b.x)-Number(a.x))*t,y:Number(a.y)+(Number(b.y)-Number(a.y))*t,z:Number(a.z)+(Number(b.z)-Number(a.z))*t});
+ if(p<1)playTimer=requestAnimationFrame(frame);else{playTimer=null;previewMoving=false;setPlayCam(b);updatePlayStatus()}}
+ playTimer=requestAnimationFrame(frame);
+}
+function preview(){clearPreviewTimers();previewMoving=false;renderPlayWorld();$("playView").style.display="flex";playIndex=0;updatePlayStatus();requestAnimationFrame(()=>{if($("playView").style.display!=="none")setPlayCam(shots[0])})}
+$("playBtn").onclick=preview;
+$("closePlay").onclick=()=>{clearPreviewTimers();previewMoving=false;$("playView").style.display="none";updatePlayStatus()};
+$("nextPlay").onclick=()=>{if(!previewMoving&&playIndex<shots.length-1)animateToShot(playIndex,playIndex+1)};
+$("prevPlay").onclick=()=>{if(!previewMoving&&playIndex>0)animateToShot(playIndex,playIndex-1)};
+window.addEventListener("resize",renderCamera);
+$("bgStyle").onchange=readBackgroundControls;$("bgColor1").oninput=readBackgroundControls;$("bgColor2").oninput=readBackgroundControls;
+syncBackgroundControls();$("duration").value=shots[0].d||3;$("pauseDuration").value=shots[0].pause??1.5;setEditorMode(true);renderObjects();renderShots();inspect();
+</script>
+<script>
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("FRAME offline setup:",err)));
+}
+</script>
+<script>
+let deferredInstallPrompt=null;const installBtn=$("installBtn");
+installBtn.addEventListener("click",async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();const result=await deferredInstallPrompt.userChoice;if(result.outcome==="accepted")installBtn.textContent="Installing...";deferredInstallPrompt=null}else{alert("FRAME installation isn't available yet.\n\nMake sure you're using Chrome and have opened FRAME through its HTTPS website. You can also use Chrome's menu → Install app.")}});
+window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;installBtn.textContent="⬇ Install FRAME";installBtn.style.display="inline-block"});
+window.addEventListener("appinstalled",()=>{installBtn.textContent="✓ FRAME Installed";installBtn.disabled=true});
+</script>
+<script>
+(async function checkFrameUpdate(){
+ if(!("serviceWorker" in navigator)||!("caches" in window))return;
+ try{const registration=await navigator.serviceWorker.ready;const markerURL=new URL("__frame_update_pending__",registration.scope).href;const cache=await caches.open("frame-studio-v5");const marker=await cache.match(markerURL);if(!marker)return;await cache.delete(markerURL);const splash=$("frameUpdate");if(!splash)return;splash.classList.add("show");window.setTimeout(()=>{splash.classList.remove("show");window.setTimeout(()=>splash.remove(),600)},2500)}
+ catch(error){console.warn("FRAME update check:",error)}
+})();
+</script>
+</body>
+</html>
