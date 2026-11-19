@@ -1,61 +1,98 @@
 
-const CACHE_VERSION = "frame-v1";
-const CACHE_NAME = `frame-cache-${CACHE_VERSION}`;
+const CACHE_NAME = "frame-cache-v1";
+const CACHE_PREFIX = "frame-cache-";
 
-const FILES_TO_CACHE = [
+const OFFLINE_FILES = [
     "./",
     "./index.html"
 ];
 
-// Install the new cache
+// Install the new service worker
 self.addEventListener("install", (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(FILES_TO_CACHE);
+            return cache.addAll(OFFLINE_FILES);
         })
     );
-
-    self.skipWaiting();
 });
 
-// Remove old caches
+// Activate only when the user chooses UPDATE NOW
+self.addEventListener("message", (event) => {
+    if (event.data === "SKIP_WAITING") {
+        self.skipWaiting();
+    }
+});
+
+// Activate the new version
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
-                cacheNames
-                    .filter((name) =>
-                        name.startsWith("frame-cache-") &&
-                        name !== CACHE_NAME
-                    )
-                    .map((name) => caches.delete(name))
+                cacheNames.map((cacheName) => {
+                    if (
+                        cacheName.startsWith(CACHE_PREFIX) &&
+                        cacheName !== CACHE_NAME
+                    ) {
+                        return caches.delete(cacheName);
+                    }
+                })
             );
+        }).then(() => {
+            return self.clients.claim();
         })
     );
-
-    self.clients.claim();
 });
 
-// Serve cached files when offline
+// Handle requests and offline support
 self.addEventListener("fetch", (event) => {
-    if (event.request.method !== "GET") return;
+    const request = event.request;
 
+    if (request.method !== "GET") {
+        return;
+    }
+
+    // Navigation: try the network first
+    if (request.mode === "navigate") {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    const copy = response.clone();
+
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(request, copy);
+                    });
+
+                    return response;
+                })
+                .catch(async () => {
+                    return (
+                        await caches.match(request)
+                    ) || (
+                        await caches.match("./index.html")
+                    );
+                })
+        );
+
+        return;
+    }
+
+    // Other files: use cache first
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
+        caches.match(request).then((cachedResponse) => {
             if (cachedResponse) {
                 return cachedResponse;
             }
 
-            return fetch(event.request).then((response) => {
+            return fetch(request).then((response) => {
                 if (
                     response &&
                     response.status === 200 &&
                     response.type === "basic"
                 ) {
-                    const responseCopy = response.clone();
+                    const copy = response.clone();
 
                     caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseCopy);
+                        cache.put(request, copy);
                     });
                 }
 
@@ -64,3 +101,4 @@ self.addEventListener("fetch", (event) => {
         })
     );
 });
+                        
