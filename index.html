@@ -11,6 +11,63 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icons/frame-192.png" type="image/png">
 <title>FRAME — Cinematic Presentation Studio</title>
+/* FRAME update animation */
+#frameUpdate {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: #0b0d12;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s ease;
+}
+
+#frameUpdate.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#frameUpdate .updateLogo {
+  color: #d6ad70;
+  font-size: clamp(38px, 10vw, 65px);
+  font-weight: 900;
+  letter-spacing: 12px;
+  animation: frameLogoIn 1s ease both;
+}
+
+#frameUpdate .updateText {
+  color: #9ba8ba;
+  font-size: 11px;
+  letter-spacing: 4px;
+  animation: frameTextIn 1.2s ease both;
+}
+
+#frameUpdate .updateLine {
+  width: 0;
+  height: 2px;
+  background: #d6ad70;
+  box-shadow: 0 0 15px #d6ad70;
+  animation: frameLine 1.3s .3s ease forwards;
+}
+
+@keyframes frameLogoIn {
+  from { opacity: 0; transform: scale(.8); letter-spacing: 25px; }
+  to { opacity: 1; transform: scale(1); letter-spacing: 12px; }
+}
+
+@keyframes frameTextIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes frameLine {
+  to { width: min(260px, 65vw); }
+} 
 <style>
 :root{--bg:#0b0d12;--panel:#141821;--panel2:#1b2230;--line:#2b3445;--text:#eef2f8;--muted:#9ba8ba;--gold:#d6ad70;--blue:#79aef7}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Arial;overflow:hidden}
