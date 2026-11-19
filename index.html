@@ -285,7 +285,7 @@ window.addEventListener("appinstalled",()=>{installBtn.textContent="✓ FRAME In
 <script>
 (async function checkFrameUpdate(){
  if(!("serviceWorker" in navigator)||!("caches" in window))return;
- try{const registration=await navigator.serviceWorker.ready;const markerURL=new URL("__frame_update_pending__",registration.scope).href;const cache=await caches.open("frame-studio-v5");const marker=await cache.match(markerURL);if(!marker)return;await cache.delete(markerURL);const splash=$("frameUpdate");if(!splash)return;splash.classList.add("show");window.setTimeout(()=>{splash.classList.remove("show");window.setTimeout(()=>splash.remove(),600)},2500)}
+ try{const registration=await navigator.serviceWorker.ready;const markerURL=new URL("__frame_update_pending__",registration.scope).href;const cache=await caches.open("frame-studio-v6");const marker=await cache.match(markerURL);if(!marker)return;await cache.delete(markerURL);const splash=$("frameUpdate");if(!splash)return;splash.classList.add("show");window.setTimeout(()=>{splash.classList.remove("show");window.setTimeout(()=>splash.remove(),600)},2500)}
  catch(error){console.warn("FRAME update check:",error)}
 })();
 </script>
