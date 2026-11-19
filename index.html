@@ -523,7 +523,7 @@ window.addEventListener("appinstalled", () => {
       registration.scope
     ).href;
 
-    const cache = await caches.open("frame-studio-v3");
+    const cache = await caches.open("frame-studio-v4");
     const marker = await cache.match(markerURL);
 
     if (!marker) return;
