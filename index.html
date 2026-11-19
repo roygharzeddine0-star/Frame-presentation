@@ -11,6 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icons/frame-192.png" type="image/png">
 <title>FRAME — Cinematic Presentation Studio</title>
+<style>
 /* FRAME update animation */
 #frameUpdate {
   position: fixed;
@@ -68,7 +69,6 @@
 @keyframes frameLine {
   to { width: min(260px, 65vw); }
 } 
-<style>
 :root{--bg:#0b0d12;--panel:#141821;--panel2:#1b2230;--line:#2b3445;--text:#eef2f8;--muted:#9ba8ba;--gold:#d6ad70;--blue:#79aef7}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Arial;overflow:hidden}
 button,input,select{font:inherit}button{border:1px solid var(--line);background:#202838;color:var(--text);padding:9px 12px;border-radius:9px;cursor:pointer}button:hover{border-color:var(--gold)}button:disabled{opacity:.42;cursor:not-allowed}button.primary{background:var(--gold);color:#17130e;border-color:var(--gold);font-weight:700}button.active{border-color:var(--gold);color:var(--gold)}
