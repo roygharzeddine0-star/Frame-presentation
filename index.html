@@ -263,7 +263,78 @@ function renderObjects(){
   let el=document.createElement('div');el.className='obj'+(o.id===selected?' selected':'');el.dataset.id=o.id;
   el.style.left=o.x+'px';el.style.top=o.y+'px';el.style.width=o.w+'px';el.style.height=o.h+'px';
   if(o.type==='image'){let im=document.createElement('img');im.src=o.src;el.appendChild(im)}
-  if(o.type==='text'){el.classList.add('textobj');el.textContent=o.text;el.style.fontSize=o.size+'px';el.style.color=o.color;el.style.fontWeight=o.bold?'bold':'normal';el.style.textAlign=o.align||'center';el.style.zIndex='20'}
+  if(o.type==='text')html+=`
+<div class="field">
+ <label>Text content</label>
+ <textarea id="ptext" rows="5">${esc(o.text)}</textarea>
+</div>
+
+<div class="field">
+ <label>Font family</label>
+ <select id="pfont">
+  <option value="Arial" ${o.fontFamily==='Arial'?'selected':''}>Arial</option>
+  <option value="Georgia" ${o.fontFamily==='Georgia'?'selected':''}>Georgia</option>
+  <option value="Verdana" ${o.fontFamily==='Verdana'?'selected':''}>Verdana</option>
+  <option value="Times New Roman" ${o.fontFamily==='Times New Roman'?'selected':''}>Times New Roman</option>
+  <option value="Courier New" ${o.fontFamily==='Courier New'?'selected':''}>Courier New</option>
+  <option value="Impact" ${o.fontFamily==='Impact'?'selected':''}>Impact</option>
+ </select>
+</div>
+
+<div class="row">
+ <div class="field">
+  <label>Font size</label>
+  <input id="psize" type="number" min="8" max="300" value="${o.size}">
+ </div>
+ <div class="field">
+  <label>Text colour</label>
+  <input id="pcolor" type="color" value="${o.color}">
+ </div>
+</div>
+
+<div class="row">
+ <div class="field">
+  <label>Bold</label>
+  <input id="pbold" type="checkbox" ${o.bold?'checked':''}>
+ </div>
+ <div class="field">
+  <label>Italic</label>
+  <input id="pitalic" type="checkbox" ${o.italic?'checked':''}>
+ </div>
+ <div class="field">
+  <label>Underline</label>
+  <input id="punderline" type="checkbox" ${o.underline?'checked':''}>
+ </div>
+</div>
+
+<div class="field">
+ <label>Alignment</label>
+ <select id="palign">
+  <option value="left" ${o.align==='left'?'selected':''}>Left</option>
+  <option value="center" ${o.align==='center'?'selected':''}>Center</option>
+  <option value="right" ${o.align==='right'?'selected':''}>Right</option>
+ </select>
+</div>
+
+<div class="row">
+ <div class="field">
+  <label>Letter spacing</label>
+  <input id="pspacing" type="number" step="1" value="${o.letterSpacing||0}">
+ </div>
+ <div class="field">
+  <label>Line spacing</label>
+  <input id="pline" type="number" min="0.5" max="3" step="0.1" value="${o.lineHeight||1.15}">
+ </div>
+</div>
+
+<div class="field">
+ <label>Background colour</label>
+ <input id="pboxcolor" type="color" value="${o.boxColor||'#15181e'}">
+ <label>
+  <input id="pbox" type="checkbox" ${o.boxFill?'checked':''}>
+  Enable text background
+ </label>
+</div>`;
   if(o.type==='card'){el.classList.add('card');el.innerHTML=`<div class="tag">${esc(o.tag||'WANTED')}</div><div class="name">${esc(o.name||'SUBJECT 01')}</div><div class="detail">${esc(o.detail||'IDENTITY UNKNOWN')}</div>`}
   if(o.type==='note'){el.classList.add('card');el.style.background='#d9cfb5';el.innerHTML=`<div class="tag">${esc(o.tag||'CASE NOTE')}</div><div class="detail" style="margin-top:12px;font-size:18px">${esc(o.detail||'Last seen near the docks')}</div>`}
   if(o.type==='thread'){el.style.height='5px';el.style.background='#b52e29';el.style.transformOrigin='left center';el.style.transform=`rotate(${o.angle||0}deg)`;el.style.boxShadow='0 0 12px #b52e2999'}
