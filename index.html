@@ -106,8 +106,20 @@ h3{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mute
 .frame.sel{border:2px solid var(--gold);background:#2b2b2a}.frame b{display:block;font-size:12px}.frame small{color:var(--muted);font-size:10px}
 .frame .num{position:absolute;right:8px;bottom:6px;color:#758197;font-size:10px}
 .field{display:flex;flex-direction:column;gap:5px;margin:9px 0}.field label{color:var(--muted);font-size:11px}
-.field input,.field select{background:#0d121a;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:8px;width:100%;min-width:0}
-.row{display:flex;gap:7px}.row>*{flex:1;min-width:0}
+.field input,.field select,.field textarea{
+ background:#0d121a;
+ color:var(--text);
+ border:1px solid var(--line);
+ border-radius:7px;
+ padding:8px;
+ width:100%;
+ min-width:0;
+}
+.field textarea{
+ resize:vertical;
+ min-height:100px;
+ font-family:inherit;
+}
 .empty{color:var(--muted);font-size:12px;line-height:1.6}
 #playView{display:none;position:fixed;inset:0;background:#000;z-index:10;align-items:center;justify-content:center}
 #playScreen{width:min(100vw,177.78vh);aspect-ratio:16/9;position:relative;overflow:hidden;background:#17191e}
