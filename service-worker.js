@@ -1,4 +1,4 @@
-const CACHE_NAME = "frame-studio-v1";
+const CACHE_NAME = "frame-studio-v2";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/frame-192.png", "./icons/frame-512.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
