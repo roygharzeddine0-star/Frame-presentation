@@ -510,7 +510,7 @@ window.addEventListener("appinstalled", () => {
   pointer-events: none;
   z-index: 9999;
 ">
-  FRAME v1.0.1
+  FRAME v1.0.0
  </div>
   <script>
 (async function checkFrameUpdate() {
@@ -523,7 +523,7 @@ window.addEventListener("appinstalled", () => {
       registration.scope
     ).href;
 
-    const cache = await caches.open("frame-studio-v4");
+    const cache = await caches.open("frame-studio-v5");
     const marker = await cache.match(markerURL);
 
     if (!marker) return;
