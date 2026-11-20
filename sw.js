@@ -7,7 +7,7 @@ const OFFLINE_FILES = [
     "./index.html"
 ];
 
-// Install the new service worker
+// Install the new service worker and prepare the offline cache.
 self.addEventListener("install", (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -16,14 +16,20 @@ self.addEventListener("install", (event) => {
     );
 });
 
-// Activate only when the user chooses UPDATE NOW
+// Activate only when the user chooses UPDATE NOW.
 self.addEventListener("message", (event) => {
-    if (event.data === "SKIP_WAITING") {
+    const message = event.data;
+
+    // Accept both message formats.
+    if (
+        message === "SKIP_WAITING" ||
+        message?.type === "SKIP_WAITING"
+    ) {
         self.skipWaiting();
     }
 });
 
-// Activate the new version
+// Activate the new version.
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -43,7 +49,7 @@ self.addEventListener("activate", (event) => {
     );
 });
 
-// Handle requests and offline support
+// Handle requests and offline support.
 self.addEventListener("fetch", (event) => {
     const request = event.request;
 
@@ -51,7 +57,7 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    // Navigation: try the network first
+    // Navigation: try the network first.
     if (request.mode === "navigate") {
         event.respondWith(
             fetch(request)
@@ -76,7 +82,7 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    // Other files: use cache first
+    // Other files: use cache first.
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
             if (cachedResponse) {
@@ -101,4 +107,4 @@ self.addEventListener("fetch", (event) => {
         })
     );
 });
-                        
+            
